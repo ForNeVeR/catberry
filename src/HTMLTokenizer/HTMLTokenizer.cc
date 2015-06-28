@@ -3,6 +3,8 @@
 
 #include "HTMLTokenizer.h"
 
+#include <iostream>
+
 using namespace v8;
 
 enum STATES {
@@ -72,16 +74,29 @@ NAN_METHOD(HTMLTokenizer::New) {
 
 NAN_METHOD(HTMLTokenizer::setHTMLString) {
 	NanScope();
+
+	std::cout << "setHTMLString()" << std::endl;
+
 	HTMLTokenizer* obj = ObjectWrap::Unwrap<HTMLTokenizer>(args.Holder());
 
 	const auto &argument = args[0];
+
+	std::cout << "argument " << &argument << std::endl;
 	auto value = argument->ToString();
+
+	std::cout << "value " << &value << std::endl;
 	
 	obj->_source = std::vector<char>(value->Utf8Length());
+
+	std::cout << "length " << value->Utf8Length() << std::endl;
 	value->WriteUtf8(obj->_source.data());
+
+	std::cout << "data " << obj->_source.data() << std::endl;
 	
 	obj->_currentIndex = 0;
 	obj->_currentState = INITIAL;
+
+	std::cout << "setHTMLString() ends" << std::endl;
 }
 
 NAN_METHOD(HTMLTokenizer::next) {
