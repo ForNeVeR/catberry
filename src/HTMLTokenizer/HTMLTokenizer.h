@@ -2,9 +2,7 @@
 #define HTMLTOKENIZER_H
 
 #include <nan.h>
-#include <string>
-
-#define COMPONENT_NAME_MIN_LENGTH 10
+#include <vector>
 
 using namespace v8;
 
@@ -29,7 +27,7 @@ private:
     // static NAN_METHOD(initial);
     static Persistent<Function> constructor;
 
-    std::string _source;
+    std::vector<char> _source;
 
     int _currentIndex, _currentState;
 

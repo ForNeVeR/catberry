@@ -1,8 +1,5 @@
 #include <node.h>
-#include <string>
 #include <nan.h>
-#include <stdio.h>
-#include <iostream>
 
 #include "HTMLTokenizer.h"
 
@@ -77,8 +74,11 @@ NAN_METHOD(HTMLTokenizer::setHTMLString) {
 	NanScope();
 	HTMLTokenizer* obj = ObjectWrap::Unwrap<HTMLTokenizer>(args.Holder());
 
-	obj->_source = "";
-	obj->_source.append(v8_to_std_string(args[0]));
+	const auto &argument = args[0];
+	auto value = argument->ToString();
+	
+	obj->_source = std::vector<char>(value->Utf8Length());
+	value->WriteUtf8(obj->_source.data());
 	
 	obj->_currentIndex = 0;
 	obj->_currentState = INITIAL;
@@ -119,14 +119,13 @@ Handle<Object> HTMLTokenizer::_next() {
 
 	ret->Set(NanNew<String>("state"),NanNew<Number>(state));
 	ret->Set(NanNew<String>("value"),
-			 NanNew<String>(this->_source.substr(start,
-												 this->_currentIndex - start).c_str()));
+			 NanNew<String>(&this->_source[start], this->_currentIndex - start));
 
 	return ret;
 
 }
 void HTMLTokenizer::initial() {
-	if (this->_currentIndex >= this->_source.length()) {
+	if (this->_currentIndex >= this->_source.size()) {
 		this->_currentState = END;
 		return;
 	}
@@ -157,7 +156,7 @@ void HTMLTokenizer::initial() {
 
 void HTMLTokenizer::component() {
 	this->_currentIndex += 5;
-	while (this->_currentIndex < this->_source.length()) {
+	while (this->_currentIndex < this->_source.size()) {
 		if (this->_source[this->_currentIndex] == '>') {
 			this->_currentIndex++;
 			this->_currentState = INITIAL;
@@ -172,7 +171,7 @@ void HTMLTokenizer::component() {
 
 void HTMLTokenizer::content() {
 	this->_currentIndex++;
-	while (this->_currentIndex < this->_source.length()) {
+	while (this->_currentIndex < this->_source.size()) {
 		if (this->_source[this->_currentIndex] == '<') {
 			this->_currentState = INITIAL;
 			return;
@@ -187,9 +186,9 @@ void HTMLTokenizer::content() {
 void HTMLTokenizer::comment() {
 	this->_currentIndex += 4;
 
-	while (this->_currentIndex < this->_source.length()) {
+	while (this->_currentIndex < this->_source.size()) {
 		if (this->_source[this->_currentIndex] == '-') {
-			if (this->_currentIndex + 2 >= this->_source.length()) {
+			if (this->_currentIndex + 2 >= this->_source.size()) {
 				this->_currentState = ILLEGAL;
 				return;
 			}
@@ -220,7 +219,7 @@ bool is_space_or_end(char c) {
 		c == '>';
 		
 }
-bool is_cat(std::string s) {
+bool is_cat(char *s) {
 	return
 		s[0] == '<' &&
 		(s[1] == 'c' || s[1] == 'C') &&
@@ -230,7 +229,7 @@ bool is_cat(std::string s) {
 		
 }
 
-bool is_document(std::string s) {
+bool is_document(char *s) {
 	return
 		s[0] == '<' &&
 		(s[1] == 'd' || s[1] == 'D') &&
@@ -245,7 +244,7 @@ bool is_document(std::string s) {
 		
 }
 
-bool is_head(std::string s) {
+bool is_head(char *s) {
 	return
 		s[0] == '<' &&
 		(s[1] == 'h' || s[1] == 'H') &&
@@ -255,7 +254,7 @@ bool is_head(std::string s) {
 		is_space_or_end(s[5]);
 		
 }
-bool is_body(std::string s) {
+bool is_body(char *s) {
 	return
 		s[0] == '<' &&
 		(s[1] == 'b' || s[1] == 'B') &&
@@ -267,15 +266,12 @@ bool is_body(std::string s) {
 }
 
 bool HTMLTokenizer::checkIfComponent() {
-
-	std::string s = this->_source.substr(this->_currentIndex,
-										 COMPONENT_NAME_MIN_LENGTH);
+	auto s = &this->_source[this->_currentIndex]; // TODO: Check for overflow
 	return
 		is_cat(s) ||
 		is_document(s) ||
 		is_head(s) ||
-		is_body(s);
-		
+		is_body(s);		
 }
 
 NODE_MODULE(addon, HTMLTokenizer::Init);
