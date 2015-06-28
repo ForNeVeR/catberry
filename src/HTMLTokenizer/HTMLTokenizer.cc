@@ -140,7 +140,7 @@ Handle<Object> HTMLTokenizer::_next() {
 
 }
 void HTMLTokenizer::initial() {
-	if (this->_currentIndex >= this->_source.size()) {
+	if (this->_currentIndex >= this->_source.size() - 1) {
 		this->_currentState = END;
 		return;
 	}
@@ -171,7 +171,7 @@ void HTMLTokenizer::initial() {
 
 void HTMLTokenizer::component() {
 	this->_currentIndex += 5;
-	while (this->_currentIndex < this->_source.size()) {
+	while (this->_currentIndex < this->_source.size() - 1) {
 		if (this->_source[this->_currentIndex] == '>') {
 			this->_currentIndex++;
 			this->_currentState = INITIAL;
@@ -186,7 +186,7 @@ void HTMLTokenizer::component() {
 
 void HTMLTokenizer::content() {
 	this->_currentIndex++;
-	while (this->_currentIndex < this->_source.size()) {
+	while (this->_currentIndex < this->_source.size() - 1) {
 		if (this->_source[this->_currentIndex] == '<') {
 			this->_currentState = INITIAL;
 			return;
@@ -201,9 +201,9 @@ void HTMLTokenizer::content() {
 void HTMLTokenizer::comment() {
 	this->_currentIndex += 4;
 
-	while (this->_currentIndex < this->_source.size()) {
+	while (this->_currentIndex < this->_source.size() - 1) {
 		if (this->_source[this->_currentIndex] == '-') {
-			if (this->_currentIndex + 2 >= this->_source.size()) {
+			if (this->_currentIndex + 2 >= this->_source.size() - 1) {
 				this->_currentState = ILLEGAL;
 				return;
 			}
