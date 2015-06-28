@@ -86,7 +86,7 @@ NAN_METHOD(HTMLTokenizer::setHTMLString) {
 
 	std::cout << "value " << &value << std::endl;
 	
-	obj->_source = std::vector<char>(value->Utf8Length());
+	obj->_source = std::vector<char>(value->Utf8Length() + 1);
 
 	std::cout << "length " << value->Utf8Length() << std::endl;
 	value->WriteUtf8(obj->_source.data());
